@@ -101,6 +101,7 @@ export class InsalesFormatter implements FormatterAbstract {
       "Изображения",
       "Ссылка на видео",
       "Параметр: Артикул",
+      "Параметр: Пол (Системный)",
       "Параметры",
       "Свойства",
       "Размерная сетка",
@@ -152,7 +153,8 @@ export class InsalesFormatter implements FormatterAbstract {
             ? undefined
             : product.images?.join(" "),
         "Ссылка на видео": product.videos ? product.videos[0] : undefined,
-        "Параметр: Артикул": product.vendorCode, // TODO: брать из обычных параметров
+        "Параметр: Артикул": product.vendorCode, // TODO: брать из обычных параметров,
+        "Параметр: Пол (Системный)": product.gender,
         ...getParams(product),
         ...getProperties(product),
         "Размерная сетка": JSON.stringify(product.sizes),
