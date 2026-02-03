@@ -19,13 +19,16 @@ export class InsalesFormatter implements FormatterAbstract {
     writableStream: Writable,
     products: Product[],
     categories?: Category[],
-    _?: Brand[],
+    brands?: Brand[],
     __?: FormatterOptions,
   ): Promise<void> {
     const mappedCategories: Record<number, Category> = {};
     categories?.forEach(
       (category) => (mappedCategories[category.id] = category),
     );
+
+    const mappedBrands: Record<number, Brand> = {};
+    brands?.forEach((brand) => (mappedBrands[brand.id] = brand));
 
     const getParams = (product: Product): Record<string, string> => {
       const properties: Record<string, string> = {};
@@ -103,6 +106,7 @@ export class InsalesFormatter implements FormatterAbstract {
       "Параметр: Артикул",
       "Параметр: Пол (Системный)",
       "Параметр: Бренд (Системный)",
+      "Параметр: Логотип бренда (Системный)",
       "Параметр: Серия (Системный)",
       "Параметр: Дата релиза (Системный)",
       "Параметры",
@@ -159,6 +163,10 @@ export class InsalesFormatter implements FormatterAbstract {
         "Параметр: Артикул": product.vendorCode, // TODO: брать из обычных параметров,
         "Параметр: Пол (Системный)": product.gender,
         "Параметр: Бренд (Системный)": product.vendor,
+        "Параметр: Логотип бренда (Системный)":
+          product.vendorId === undefined
+            ? undefined
+            : mappedBrands[product.vendorId]?.logoUrl,
         "Параметр: Серия (Системный)": product.seriesName,
         "Параметр: Дата релиза (Системный)": product.saleDate,
         ...getParams(product),
