@@ -38,6 +38,13 @@ export class WooCommerceFormatter implements FormatterAbstract {
     "SizeGrid",
   ];
 
+  private readonly CUSTOM_ATTRIBUTES: Partial<Record<keyof Product, string>> = {
+    gender: "Пол",
+    vendor: "Производитель",
+    vendorCode: "Артикул",
+    seriesName: "Серия",
+  };
+
   private formatKeyAttribute(key: string) {
     const keyWithoutInvalidCharacters = key
       .replaceAll(",", "")
@@ -93,7 +100,11 @@ export class WooCommerceFormatter implements FormatterAbstract {
     const propertiesMap = new Map<number, Record<string, string | number>>();
     const uniqueAttributes = new Map<string, number>();
 
-    const genderTitle = "Пол";
+    Object.values(this.CUSTOM_ATTRIBUTES).forEach((attrName) => {
+      if (!uniqueAttributes.has(attrName)) {
+        uniqueAttributes.set(attrName, uniqueAttributes.size);
+      }
+    });
 
     formatedProducts.forEach((product) => {
       product.params?.forEach(({ key }) => {
@@ -101,8 +112,6 @@ export class WooCommerceFormatter implements FormatterAbstract {
           uniqueAttributes.set(key, uniqueAttributes.size);
         }
       });
-
-      uniqueAttributes.set(genderTitle, uniqueAttributes.size);
 
       product.properties?.forEach(({ key }) => {
         if (!uniqueAttributes.has(key)) {
@@ -138,20 +147,34 @@ export class WooCommerceFormatter implements FormatterAbstract {
         );
       });
 
-      const genderIndex = uniqueAttributes.get(genderTitle);
+      Object.entries(this.CUSTOM_ATTRIBUTES).forEach(([field, attrName]) => {
+        const value = product[field as keyof Product];
+        if (value) {
+          const index = uniqueAttributes.get(attrName);
 
-      const genderAttribute = this.createAttribute({
-        name: genderTitle,
-        id: genderIndex,
-        values: product.gender,
-        global: 0,
+          if (index === undefined) {
+            console.error(
+              `Не нашлось уникального ключа для кастомного атрибута - ${attrName}`,
+            );
+            return;
+          }
+
+          if (!paramAttributes[`Attribute ${index} name`]) {
+            const attribute = this.createAttribute({
+              name: attrName,
+              id: index,
+              values: value as string | number | undefined,
+              global: 0,
+            });
+
+            if (!attribute) return;
+
+            Object.entries(attribute).forEach(
+              ([key, val]) => (propertyAttributes[key] = val),
+            );
+          }
+        }
       });
-
-      if (genderAttribute) {
-        Object.entries(genderAttribute).forEach(
-          ([key, value]) => (propertyAttributes[key] = value),
-        );
-      }
 
       product.properties?.forEach(({ key, value }) => {
         const index = uniqueAttributes.get(key);
